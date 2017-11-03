@@ -70,7 +70,14 @@ public class SQLDB
             }
         }
     }
-    public void ExecuteSP<U>(string spName, out U t)
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="U"></typeparam>
+    /// <param name="spName"></param>
+    /// <param name="t"></param>
+    public U ExecuteSP<U>(string spName, out U t)
     {
         using (SqlConnection sqlConnection = new SqlConnection(connectionString))
         {
@@ -78,21 +85,11 @@ public class SQLDB
             {
                 sqlCommand.CommandType = CommandType.StoredProcedure;
                 sqlConnection.Open();
-
-                foreach (SqlParameter param in sqlCommand.Parameters)
-                {
-                    if (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput)
-                    {
-                        object val = type.GetType().GetProperty(param.ParameterName.Replace("@", "")).GetValue(type, null);
-
-                        if (val != null)
-                        {
-                            param.Value = val;
-                        }
-                    }
-                }
-                sqlCommand.ExecuteNonQuery();
-                return sqlCommand.Parameters[1].Value 
+                SqlCommandBuilder.DeriveParameters(sqlCommand);
+                sqlCommand.Parameters[1].Value = DBNull.Value;
+                sqlCommand.ExecuteNonQuery();              
+                t = (U)sqlCommand.Parameters[1].Value;
+                return t;
             }
         }
     }
